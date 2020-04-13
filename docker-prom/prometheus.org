@@ -1,0 +1,164 @@
+
+
+down on   pi3b  or hellong2 
+
+Note 第二次再全来一次docker的 
+
+
+** 课前知识
+Prometheus的上报客户端则分为不同语言的SDK和不同用途的exporter两种
+
+
+
+** ins  by precompiled binaries
+
+***  down
+直接先下载 在 aws 上 ，再拉回来 不然下载再慢了 
+
+
+或者 github下载 
+wget https://github.com/prometheus/prometheus/releases/download/v2.3.2/prometheus-2.3.2.linux-amd64.tar.gz
+
+
+
+
+/data/apps/prometheus
+
+
+
+./prometheus --config.file=prometheus.yml
+
+
+http://192.168.11.216:9090/graph#
+
+
+https://blog.csdn.net/lijiaocn/article/details/81865120
+
+
+
+prometheus的配置文件
+
+
+其大致分为四部分：
+
+    global：全局配置，其中scrape_interval表示抓取一次数据的间隔时间，evaluation_interval表示进行告警规则检测的间隔时间；
+    alerting：告警管理器（Alertmanager）的配置，目前还没有安装Alertmanager；
+    rule_files：告警规则有哪些；
+    scrape_configs：抓取监控信息的目标。一个job_name就是一个目标，其targets就是采集信息的IP和端口。这里默认监控了Prometheus自己，可以通过修改这里来修改Prometheus的监控端口。Prometheus的每个exporter都会是一个目标，它们可以上报不同的监控信息，比如机器状态，或者mysql性能等等，不同语言sdk也会是一个目标，它们会上报你自定义的业务监控信息。
+
+
+
+*** ins by docker 
+
+https://github.com/evan886/docker-compose-monitor.git
+
+
+不过这样默认是最新版本的 有空要加上版本
+
+
+
+https://hub.docker.com/u/prom
+
+
+err 
+
+ERROR: for prometheus  a bytes-like object is required, not 'str'
+
+本地的配置文件 加上就好了  还有 version: "3"
+
+
+** 添加机器状态监控 
+
+*** node 下载 
+官方或者 github 
+
+https://github.com/prometheus/node_exporter/releases
+
+https://github.com/prometheus/node_exporter/releases/download/v1.0.0-rc.0/node_exporter-1.0.0-rc.0.linux-amd64.tar.gz
+
+
+node_exporter本身也是一个http服务，可以供prometheus server调用（pull）来获取监控的信息，安装方法同样是下载安装包后解压直接运行：
+
+
+
+采集测试 
+ curl http://localhost:9100/metrics
+
+
+如果是成功的 
+去prometheus的配置文件（prometheus.yml）中，加上这个target： 一般 来说只加这个最后三行到配置文件 最好 如果你是新的
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'server'
+    static_configs:
+      - targets: ['localhost:9100']
+
+
+** 安装Grafana
+
+*** ins by docker 
+
+https://grafana.com/docs/grafana/latest/installation/docker/
+
+*** deb
+sudo apt-get install -y adduser libfontconfig1
+
+# 如果不行 可以改为 axel 
+wget https://dl.grafana.com/oss/release/grafana_6.7.2_amd64.deb
+sudo dpkg -i grafana_6.7.2_amd64.deb
+sudo systemctl start grafana-server
+
+*** rhel 
+wget https://dl.grafana.com/oss/release/grafana-6.7.2-1.x86_64.rpm
+sudo yum install grafana-6.7.2-1.x86_64.rpm
+
+*** Standalone Linux Binaries
+wget https://dl.grafana.com/oss/release/grafana-6.7.2.linux-amd64.tar.gz
+tar -zxvf grafana-6.7.2.linux-amd64.tar.gz
+
+
+** usage and confi grafana
+
+览器输入 IP:3000 来访问Grafana，管理员账号密码默认是admin/admin。首次登陆会让你修改管理员密码，然后就可以登录查看了。
+
+在界面左边是一竖排选项，选择设置图标中的Data Source，添加Prometheus的数据源，URL就填上面你给Prometheus Server设置的ip+端口号就行了，如果没改过且在本机运行的话，那就是localhost:9090。
+
+grafana 还是不太会用呢   
+
+
+
+***  see also
+https://grafana.com/grafana/download
+
+
+
+
+
+
+Prometheus 系统监控方案 二 安装与配置
+https://www.cnblogs.com/vovlie/p/Prometheus_install.html
+
+
+https://www.cnblogs.com/vovlie/p/Prometheus_CONCEPTS.html
+
+
+
+https://www.jianshu.com/p/8d2c020313f0 good  Prometheus+Grafana监控系统搭建
+
+
+
+
+
+安装前准备
+
+在安装linux前，有些BIOS选项需要修改下设置，开机按F2进入BIOS，
+
+    Disable Secure Boot. BIOS > Secure Boot > Disabled
+    Change RAID to ACHI. BIOS > System Configuration > SATA Operation > RAID to ACHI
+    第一项设置禁止安全启动，让Linux可以启动。第二项改硬盘模式为ACHI，让Linux能够检测到NVME SSD，据说修改后Win10会因为驱动出现问题， 要用win10 先忙改bioss 回  raid就行了 。
+
+*** 
+
