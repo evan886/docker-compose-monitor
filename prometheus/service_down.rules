@@ -1,0 +1,11 @@
+groups:
+- name: ServiceStatus #规则组名称   
+  rules:
+  - alert: ServiceStatusAlert  #单个规则的名称
+    expr: up == 0   #匹配规则, up==0
+    for: 10s        #持续时间
+    labels:         #标签
+      project: zhidaoAPP    #自定义lables
+    annotations:            #告警正文
+      summary: "Instance {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minutes."
